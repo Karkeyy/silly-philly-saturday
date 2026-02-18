@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<title>Philadelphia Saturday — Final Cinematic Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+
+body{
+    margin:0;
+    background:black;
+    font-family:'Press Start 2P', monospace;
+    overflow:hidden;
+}
+
+.scene{
+    position:absolute;
+    width:100%;
+    height:100%;
+    opacity:0;
+    transition:opacity 1s ease;
+}
+
+.visible{opacity:1;}
+
+canvas{
+    position:absolute;
+    width:100%;
+    height:100%;
+    image-rendering:pixelated;
+}
+
+#dialogue{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    background:rgba(0,0,0,.92);
+    color:white;
+    padding:20px;
+    display:none;
+    font-size:11px;
+}
+
+button{
+    font-family:'Press Start 2P', monospace;
+    padding:10px 16px;
+    background:white;
+    border:none;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+button:hover{background:#ffd6ea;}
+
+.center{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    color:white;
+}
+
+.vignette{
+    position:absolute;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    background:radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.75) 100%);
+    opacity:0;
+    transition:opacity 2s;
+}
+
+.fade-black{
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:black;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 2s;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="title" class="scene visible">
+    <div class="center">
+        <div>Philadelphia. Saturday.</div><br><br>
+        <button id="startBtn" onclick="startGame()">CLICK TO START</button>
+    </div>
+</div>
+
+<div id="game" class="scene">
+    <canvas id="bg"></canvas>
+    <canvas id="mid"></canvas>
+    <canvas id="fg"></canvas>
+    <div class="vignette" id="vignette"></div>
+    <div class="fade-black" id="fade"></div>
+</div>
+
+<div id="dialogue">
+    <div id="text"></div>
+    <button id="continueBtn">CONTINUE</button>
+</div>
+
+<script>
+window.addEventListener("load", function(){
+// expose globally for safety
+setTimeout(()=>{ if(typeof startGame==='function'){ window.startGame=startGame;} },0);
+
+const bgCanvas = document.getElementById("bg");
+const midCanvas = document.getElementById("mid");
+const fgCanvas = document.getElementById("fg");
+
+bgCanvas.width = window.innerWidth;
+bgCanvas.height = window.innerHeight;
+midCanvas.width = window.innerWidth;
+midCanvas.height = window.innerHeight;
+fgCanvas.width = window.innerWidth;
+fgCanvas.height = window.innerHeight;
+
+const bg = bgCanvas.getContext("2d");
+const mid = midCanvas.getContext("2d");
+const fg = fgCanvas.getContext("2d");
+
+let W, H;
+function resizeGame(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    bgCanvas.width = W; bgCanvas.height = H;
+    midCanvas.width = W; midCanvas.height = H;
+    fgCanvas.width = W; fgCanvas.height = H;
+}
+resizeGame();
+window.addEventListener('resize', resizeGame);
+
+let queue = [];
+let after = null;
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("continueBtn").addEventListener("click", nextLine);
+
+function showScene(){
+    document.getElementById("title").classList.remove("visible");
+    document.getElementById("game").classList.add("visible");
+}
+
+function say(lines,next=null){
+    queue = [...lines];
+    after = next;
+    document.getElementById("dialogue").style.display="block";
+    nextLine();
+}
+
+function nextLine(){
+    if(queue.length){
+        document.getElementById("text").innerText = queue.shift();
+    }else{
+        document.getElementById("dialogue").style.display="none";
+        if(after) after();
+    }
+}
+
+function clearAll(){
+    bg.clearRect(0,0,W,H);
+    mid.clearRect(0,0,W,H);
+    fg.clearRect(0,0,W,H);
+}
+
+function drawQuinn(x,y){
+    mid.fillStyle="#c68642";
+    mid.fillRect(x,y-40,20,20);
+    mid.fillStyle="#111";
+    mid.fillRect(x-10,y-60,40,30);
+    mid.fillStyle="#8b5a2b";
+    mid.fillRect(x,y-20,20,25);
+    mid.fillStyle="#7ec0ee";
+    mid.fillRect(x,y+5,20,25);
+    mid.fillStyle="#fff";
+    mid.fillRect(x,y+30,20,5);
+}
+
+function drawTee(x,y){
+    mid.fillStyle="#f4c2c2";
+    mid.fillRect(x,y-40,20,20);
+    mid.fillStyle="#f5deb3";
+    mid.fillRect(x-5,y-55,30,25);
+    mid.fillStyle="#f8f4ec";
+    mid.fillRect(x,y-20,20,40);
+}
+
+function startGame(){
+    resizeGame();
+    showScene();
+    parkingLot();
+}
+
+function parkingLot(){
+    clearAll();
+
+    bg.fillStyle="#6fa8dc";
+    bg.fillRect(0,0,W,H*0.6);
+
+    bg.fillStyle="#2e8b57";
+    for(let i=0;i<W;i+=150){
+        bg.fillRect(i,H*0.5-60,80,60);
+    }
+
+    bg.fillStyle="#444";
+    bg.fillRect(0,H*0.6,W,H*0.4);
+
+    bg.fillStyle="black";
+    mid.fillRect(W*0.55,H*0.65,140,45);
+
+    drawQuinn(W*0.35,H*0.7);
+    drawTee(W*0.6,H*0.7);
+
+    say([
+        "haha, you found me! sorry about that.",
+        "my phone literally died on the way here.",
+        "it turned on for like two seconds so I could tell you where I was.",
+        "good thing it did."
+    ], museumExterior);
+}
+
+function museumExterior(){
+    clearAll();
+
+    bg.fillStyle="#d8c3a5";
+    bg.fillRect(0,0,W,H);
+
+    bg.fillStyle="#bfa980";
+    bg.fillRect(W*0.2,H*0.25,W*0.6,H*0.5);
+
+    bg.fillStyle="#333";
+    bg.fillRect(W*0.45,H*0.4,120,180);
+
+    drawQuinn(W*0.45,H*0.75);
+    drawTee(W*0.52,H*0.75);
+
+    say([
+        "Zip code?",
+        "Oh — yeah. It’s 249 Elm—",
+        "…wait.",
+        "You just gave her your full address.",
+        "I thought she asked for that!"
+    ], hallway);
+}
+
+function hallway(){
+    clearAll();
+
+    bg.fillStyle="#fffacd";
+    bg.fillRect(0,0,W,H);
+
+    for(let i=0;i<20;i++){
+        bg.fillStyle="rgba(255,255,200,0.1)";
+        bg.fillRect(i*100,0,50,H);
+    }
+
+    drawQuinn(W*0.45,H*0.75);
+    drawTee(W*0.5,H*0.7);
+
+    document.getElementById("vignette").style.opacity=1;
+
+    say([
+        "I can’t hear anything.",
+        "She’s so beautiful.",
+        "Blink."
+    ], target);
+}
+
+function target(){
+    document.getElementById("vignette").style.opacity=0;
+    clearAll();
+
+    bg.fillStyle="#cc0000";
+    bg.fillRect(0,0,W,H);
+
+    bg.fillStyle="#fff";
+    bg.fillRect(W*0.25,H*0.15,W*0.5,60);
+
+    for(let y=H*0.3;y<H*0.7;y+=50){
+        bg.fillStyle="#999";
+        bg.fillRect(W*0.3,y,W*0.4,25);
+    }
+
+    drawQuinn(W*0.45,H*0.75);
+    drawTee(W*0.52,H*0.75);
+
+    say([
+        "Nothing.",
+        "You could just come back to mine and charge it."
+    ], bedroom);
+}
+
+function bedroom(){
+    clearAll();
+
+    bg.fillStyle="#9370db";
+    bg.fillRect(0,0,W,H);
+
+    bg.fillStyle="#222";
+    bg.fillRect(W*0.1,H*0.6,W*0.6,120);
+
+    bg.fillStyle="#ffd700";
+    bg.fillRect(W*0.8,H*0.25,40,120);
+
+    drawQuinn(W*0.47,H*0.75);
+    drawTee(W*0.5,H*0.75);
+
+    say([
+        "Two of Cups.",
+        "Connection.",
+        "Partnership.",
+        "Oh.",
+        "Oh."
+    ], doorway);
+}
+
+function doorway(){
+    clearAll();
+
+    bg.fillStyle="#ddd";
+    bg.fillRect(0,0,W,H);
+
+    bg.fillStyle="#fff";
+    bg.fillRect(W*0.4,H*0.3,200,300);
+
+    drawQuinn(W*0.45,H*0.75);
+    drawTee(W*0.55,H*0.75);
+
+    say([
+        "So I guess I’ll be back in Philly again.",
+        "I guess so."
+    ], credits);
+}
+
+function credits(){
+    document.getElementById("fade").style.opacity=1;
+
+    setTimeout(()=>{
+        clearAll();
+        bg.fillStyle="black";
+        bg.fillRect(0,0,W,H);
+
+        bg.fillStyle="white";
+        bg.font="20px 'Press Start 2P'";
+        bg.textAlign="center";
+        bg.fillText("End of Cycle.",W/2,H/2-40);
+        bg.fillText("Beginning of Something Else.",W/2,H/2);
+        bg.fillText("for quinn,",W/2,H/2+80);
+        bg.fillText("love tee.",W/2,H/2+120);
+    },2000);
+}
+
+});
+
+</script>
+
+</body>
+</html>
